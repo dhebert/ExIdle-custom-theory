@@ -30,7 +30,7 @@ var R, r1, r2;
 var t;
 var scalar = .1;
 var rhodot = BigNumber.ZERO;
-var gcdRr1;
+var gcdRr1 = BigNumber.ZERO;
 var unscaledY = BigNumber.ZERO;
 var unscaledZ = BigNumber.ZERO;
 var quaternaryEntries = [];
@@ -160,20 +160,20 @@ var getPrimaryEquation = () => {
         result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
 	
 	result += " r_2 R\\sqrt{x^2+y^2}}{gcd(R, r_1)}" +
-	"\\qquad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
-	"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";
+	"\\quad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
+	"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";// \\\\" + 
+	//"\\\\r_2 = .5r_1 \\\\ \\\\ L = (R - r_1)";
     return result;
 }
 
 var getSecondaryEquation = () => {
 	theory.secondaryEquationHeight = 300;
 	theory.secondaryEquationScale = 1;
-	return "";//\\\\" + 
-		   //""; //(\\sin(\\pi\\frac{t}{500})+1)";
+	return "";
 }
 
 var getTertiaryEquation = () => {
-	return "L=(R-r_1) \\quad r_2=.5r_1 \\quad GCD(R, r1)=" + gcdRr1.toString(0);
+	return "L=(R-r_1) \\quad r_2=.5r_1 \\quad gcd(R, r1)=" + gcdRr1.toString(0);
 }
 
 var getQuaternaryEntries = () => {
@@ -191,7 +191,7 @@ var getQuaternaryEntries = () => {
 	quaternaryEntries[1].value = getr2().toString(2);
     quaternaryEntries[2].value = t;
 	quaternaryEntries[3].value = unscaledY;
-	quaternaryEntries[4].value = unscaledZ;
+	quaternaryEntries[4].value = -1 * unscaledZ;
 	quaternaryEntries[5].value = rhodot;
 
     return quaternaryEntries;
