@@ -96,7 +96,23 @@ var init = () => {
 			theory.clearGraph();
 		}
 	}
+	
+	/////////////////////
+    // Permanent Upgrades
+    theory.createPublicationUpgrade(0, currency, 1e4);
+    theory.createBuyAllUpgrade(1, currency, 1e15);
+    theory.createAutoBuyerUpgrade(2, currency, 1e25);
 
+	///////////////////////
+    //// Milestone Upgrades
+    theory.setMilestoneCost(new LinearCost(25, 25));
+
+    {
+        r1Exp = theory.createMilestoneUpgrade(0, 3);
+        r1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.5");
+        r1Exp.info = Localization.getUpgradeIncCustomExpInfo("r_1", "0.5");
+        r1Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
+    }
 
     updateAvailability();
 }
@@ -115,18 +131,14 @@ var tick = (elapsedTime, multiplier) => {
 	var r1v = getr1(r1.level);
 	var r2v = getr2();
 	
-	
-	//state.x = scalar * ((R - r) * BigNumber.from((t * 5) * r / R).sin().toNumber() - a * BigNumber.from((t * 5) * (1 - r/R)).sin().toNumber());
 	if (Rv != BigNumber.ZERO)
 	{
 		scalar = (BigNumber.ONE / (BigNumber.TWO * Rv));
-		//var unscaledY = ((Rv - r1v) * (t * r1v / Rv).cos() + r2v * (t * (BigNumber.ONE - r1v/Rv)).cos());
-		//var unscaledZ = ((Rv - r1v) * (t * r1v / Rv).sin() - r2v * (t * (BigNumber.ONE - r1v/Rv)).sin());
 		var unscaledY = ((Rv - r1v) * (t).cos() + r2v * (t * (Rv - r1v)/r1v).cos());
 		var unscaledZ = ((Rv - r1v) * (t).sin() - r2v * (t * (Rv - r1v)/r1v).sin());
 		state.y = (scalar * unscaledY).toNumber();
 		state.z = (scalar * unscaledZ).toNumber();
-		rhodot = r1v * r2v * Rv * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
+		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v * Rv * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
 		currency.value += dt * rhodot;
 	}
 	
@@ -136,7 +148,12 @@ var tick = (elapsedTime, multiplier) => {
 var getPrimaryEquation = () => {
 	theory.primaryEquationHeight = 75;
 	theory.primaryEquationScale = .9;
-    let result = "\\dot{\\rho}=\\frac{r_1 r_2 R\\sqrt{x^2+y^2}}{gcd(r_1, R)}" +
+    let result = "\\dot{\\rho}=\\frac{r_1";
+
+	if (r1Exp.level > 0)
+        result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
+	
+	result += " r_2 R\\sqrt{x^2+y^2}}{gcd(r_1, R)}" +
 	"\\qquad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
 	"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";
     return result;
@@ -158,9 +175,9 @@ var getTertiaryEquation = () => {
 						",GCD(R, r1)=" + GCD(parseInt(getR(R.level).toString(0,0,Rounding.NEAREST)), parseInt(getr1(r1.level).toString(0,0,Rounding.NEAREST)));	
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.164) / BigNumber.THREE;
+var getPublicationMultiplier = (tau) => tau.pow(1.5);
 var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.164}}{3}";
-var getTau = () => currency.value;
+var getTau = () => currency.value.pow(0.1);
 var get3DGraphPoint = () => swizzles[0]((state - center) * scale);
 
 var getR = (level) => {
@@ -190,7 +207,7 @@ var getR = (level) => {
 }
 var getr1 = (level) => BigNumber.from(level + 1);
 var getr2 = () => getr1(r1.level) * .5;//getr1(r1.level) * ((BigNumber.PI * t / BigNumber.from(500)).sin() + BigNumber.ONE);
-var getC1Exponent = (level) => BigNumber.from(1 + 0.05 * level);
+var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
 var getC2Exponent = (level) => BigNumber.from(1 + 0.05 * level);
 
 var GCD = (a, b) => {
