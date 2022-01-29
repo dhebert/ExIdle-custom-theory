@@ -30,6 +30,10 @@ var R, r1, r2;
 var t;
 var scalar = .1;
 var rhodot = BigNumber.ZERO;
+var gcdRr1;
+var unscaledY = BigNumber.ZERO;
+var unscaledZ = BigNumber.ZERO;
+var quaternaryEntries = [];
 
 var firstHundredPrimes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,
 73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,
@@ -134,14 +138,16 @@ var tick = (elapsedTime, multiplier) => {
 	if (Rv != BigNumber.ZERO)
 	{
 		scalar = (BigNumber.ONE / (BigNumber.TWO * Rv));
-		var unscaledY = ((Rv - r1v) * (t).cos() + r2v * (t * (Rv - r1v)/r1v).cos());
-		var unscaledZ = ((Rv - r1v) * (t).sin() - r2v * (t * (Rv - r1v)/r1v).sin());
+		unscaledY = ((Rv - r1v) * (t).cos() + r2v * (t * (Rv - r1v)/r1v).cos());
+		unscaledZ = ((Rv - r1v) * (t).sin() - r2v * (t * (Rv - r1v)/r1v).sin());
 		state.y = (scalar * unscaledY).toNumber();
 		state.z = (scalar * unscaledZ).toNumber();
-		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v * Rv * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
+		gcdRr1 = BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
+		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v * Rv * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / gcdRr1;
 		currency.value += dt * rhodot;
 	}
 	
+	theory.invalidateQuaternaryValues();
 	theory.invalidateTertiaryEquation();
 }
 
@@ -153,7 +159,7 @@ var getPrimaryEquation = () => {
 	if (r1Exp.level > 0)
         result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
 	
-	result += " r_2 R\\sqrt{x^2+y^2}}{gcd(r_1, R)}" +
+	result += " r_2 R\\sqrt{x^2+y^2}}{gcd(R, r_1)}" +
 	"\\qquad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
 	"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";
     return result;
@@ -167,12 +173,28 @@ var getSecondaryEquation = () => {
 }
 
 var getTertiaryEquation = () => {
-	return "L=(R-r_1),r_2=.5r_1, \\theta =" + t.toString(2) +
-                        ",r_2=" + getr2().toString(2) +
-						//",x=" + BigNumber.from(state.y).toString(2) +
-						//",y=" + BigNumber.from(state.z).toString(2) + 
-						",\\dot{\\rho}=" + rhodot.toString(2) + 
-						",GCD(R, r1)=" + GCD(parseInt(getR(R.level).toString(0,0,Rounding.NEAREST)), parseInt(getr1(r1.level).toString(0,0,Rounding.NEAREST)));	
+	return "L=(R-r_1) \\quad r_2=.5r_1 \\quad GCD(R, r1)=" + gcdRr1.toString(0);
+}
+
+var getQuaternaryEntries = () => {
+    if (quaternaryEntries.length == 0)
+    {
+		quaternaryEntries.push(new QuaternaryEntry("L", null));
+		quaternaryEntries.push(new QuaternaryEntry("r_2", null));
+		quaternaryEntries.push(new QuaternaryEntry("\\theta", null));
+		quaternaryEntries.push(new QuaternaryEntry("x", null));
+		quaternaryEntries.push(new QuaternaryEntry("y", null));
+		quaternaryEntries.push(new QuaternaryEntry("\\dot{\\rho}", null));
+    }
+
+	quaternaryEntries[0].value = (getR(R.level) - getr1(r1.level)).toString(0);
+	quaternaryEntries[1].value = getr2().toString(2);
+    quaternaryEntries[2].value = t;
+	quaternaryEntries[3].value = unscaledY;
+	quaternaryEntries[4].value = unscaledZ;
+	quaternaryEntries[5].value = rhodot;
+
+    return quaternaryEntries;
 }
 
 var getPublicationMultiplier = (tau) => tau.pow(1.5);
@@ -183,7 +205,6 @@ var get3DGraphPoint = () => swizzles[0]((state - center) * scale);
 var getR = (level) => {
 	if (level == 0) { return BigNumber.ZERO; }
 	if (level == 1) { return BigNumber.ONE; }
-	//return BigNumber.TEN.pow(BigNumber.from(level));
 	
 	var i = 0;
 	var k = 0;
