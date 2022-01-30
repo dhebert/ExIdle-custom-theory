@@ -34,6 +34,7 @@ var gcdRr1 = BigNumber.ZERO;
 var unscaledY = BigNumber.ZERO;
 var unscaledZ = BigNumber.ZERO;
 var quaternaryEntries = [];
+var enableRefundsUpgrade;
 
 var firstHundredPrimes = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,
 73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,
@@ -49,7 +50,7 @@ var RLevels = [1,
 4620,6930,9240,11550,13860,16170,18480,20790,23100,25410,27720,30030
 ]
 
-var alwaysShowRefundButtons = () => true;
+var alwaysShowRefundButtons = () => enableRefundsUpgrade.level > 0;
 
 var init = () => {
 	t = BigNumber.ONE;
@@ -64,27 +65,27 @@ var init = () => {
 		var costExp2 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
 		var costExp3 = BigNumber.from("1e100").log2() / BigNumber.from(14699);
 		var costExp4 = BigNumber.from("1e100").log2() / BigNumber.from(133976);
-		var costExp5 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
-		var costExp6 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
-		var costExp7 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
-		var costExp8 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
-		var costExp9 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
-		var costExp10 = BigNumber.from("1e100").log2() / BigNumber.from(1380);
+		var costExp5 = BigNumber.from("1e100").log2() / BigNumber.from(300295);
+		var costExp6 = BigNumber.from("1e100").log2() / BigNumber.from(4144134);
+		var costExp7 = BigNumber.from("1e100").log2() / BigNumber.from(5105093);
+		var costExp8 = BigNumber.from("1e100").log2() / BigNumber.from(96996892);
+		var costExp9 = BigNumber.from("1e100").log2() / BigNumber.from(96996891);
+		var costExp10 = BigNumber.from("1e100").log2() / BigNumber.from(1804142330);
 		let getDesc = (level) => "r_1=" + getr1(level).toString(0);
 		//r1 = theory.createUpgrade(1, currency, new ExponentialCost(1,BigNumber.from("1.65282744595332527e-6"))); //exponential cost to reach 1e1000
 		r1 = theory.createUpgrade(1, currency, new CompositeCost(89,new ExponentialCost(1, costExp1),
 											   new CompositeCost(1381,new ExponentialCost(BigNumber.from("1e100") * BigNumber.TWO.pow(costExp2), costExp2),
 											   new CompositeCost(14701,new ExponentialCost(BigNumber.from("1e200") * BigNumber.TWO.pow(costExp3), costExp3),
 											   new CompositeCost(133979,new ExponentialCost(BigNumber.from("1e300") * BigNumber.TWO.pow(costExp4), costExp4),
-											   new CompositeCost(89,new ExponentialCost(BigNumber.from("1e400") * BigNumber.TWO.pow(costExp5), costExp5),
-											   new CompositeCost(89,new ExponentialCost(BigNumber.from("1e500") * BigNumber.TWO.pow(costExp6), costExp6),
-											   new CompositeCost(89,new ExponentialCost(BigNumber.from("1e600") * BigNumber.TWO.pow(costExp7), costExp7),
-											   new CompositeCost(89,new ExponentialCost(BigNumber.from("1e700") * BigNumber.TWO.pow(costExp8), costExp8),
-											   new CompositeCost(89,new ExponentialCost(BigNumber.from("1e800") * BigNumber.TWO.pow(costExp9), costExp9),
+											   new CompositeCost(300300,new ExponentialCost(BigNumber.from("1e400") * BigNumber.TWO.pow(costExp5), costExp5),
+											   new CompositeCost(4144140,new ExponentialCost(BigNumber.from("1e500") * BigNumber.TWO.pow(costExp6), costExp6),
+											   new CompositeCost(5105100,new ExponentialCost(BigNumber.from("1e600") * BigNumber.TWO.pow(costExp7), costExp7),
+											   new CompositeCost(96996900,new ExponentialCost(BigNumber.from("1e700") * BigNumber.TWO.pow(costExp8), costExp8),
+											   new CompositeCost(96996900,new ExponentialCost(BigNumber.from("1e800") * BigNumber.TWO.pow(costExp9), costExp9),
 											   new ExponentialCost(BigNumber.from("1e900") * BigNumber.TWO.pow(costExp10), costExp10)))))))))));
 		r1.getDescription = (_) => Utils.getMath(getDesc(r1.level));
 		r1.getInfo = (amount) => Utils.getMathTo(getDesc(r1.level), getDesc(r1.level + amount));
-		//r1.boughtOrRefunded = (_) => theory.clearGraph();
+		r1.boughtOrRefunded = (_) => theory.clearGraph();
 	}
     
 	
@@ -103,21 +104,51 @@ var init = () => {
 	
 	/////////////////////
     // Permanent Upgrades
+	
     theory.createPublicationUpgrade(0, currency, 1e4);
     theory.createBuyAllUpgrade(1, currency, 1e15);
     theory.createAutoBuyerUpgrade(2, currency, 1e25);
+	enableRefundsUpgrade = theory.createPermanentUpgrade(3, currency, new LinearCost(BigNumber.from("1e50"),0));
+	enableRefundsUpgrade.maxLevel = 1;
 
 	///////////////////////
     //// Milestone Upgrades
-    theory.setMilestoneCost(new LinearCost(25, 25));
+    theory.setMilestoneCost(new LinearCost(2.5, 2.5));
 
     {
         r1Exp = theory.createMilestoneUpgrade(0, 3);
-        r1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.5");
+        r1Exp.description = Localization.getUpgradeIncCustomExpDesc("r_1", "0.5");
         r1Exp.info = Localization.getUpgradeIncCustomExpInfo("r_1", "0.5");
         r1Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
     }
+	{
+        r2Exp = theory.createMilestoneUpgrade(1, 3);
+        r2Exp.description = Localization.getUpgradeIncCustomExpDesc("r_2", "0.5");
+        r2Exp.info = Localization.getUpgradeIncCustomExpInfo("r_2", "0.5");
+        r2Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
+    }
 
+	{
+        RExp = theory.createMilestoneUpgrade(2, 3);
+        RExp.description = Localization.getUpgradeIncCustomExpDesc("R", "0.5");
+        RExp.info = Localization.getUpgradeIncCustomExpInfo("R", "0.5");
+        RExp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
+    }
+	
+	{
+		r2Varies = theory.createMilestoneUpgrade(3,1);
+		r2Varies.description = "r2 varies with theta";
+		r2Varies.info = "r2 varies with theta";
+		r2Varies.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+	}
+	
+	{
+		thetaDotMult = theory.createMilestoneUpgrade(4,3);
+		thetaDotMult.description = Localization.getUpgradeMultCustomDesc("\\dot{\\theta}", 2);
+		thetaDotMult.info = Localization.getUpgradeMultCustomInfo("\\dot{\\theta}", 2);
+		//thetaDotMult.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+	}
+	
     updateAvailability();
 }
 
@@ -129,7 +160,7 @@ var tick = (elapsedTime, multiplier) => {
     let dt = BigNumber.from(elapsedTime * multiplier);
     let bonus = theory.publicationMultiplier;
 									
-	t = t + dt;
+	t = t + dt * getThetaDotMult(thetaDotMult.level);
 	
 	var Rv = getR(R.level);
 	var r1v = getr1(r1.level);
@@ -143,7 +174,7 @@ var tick = (elapsedTime, multiplier) => {
 		state.y = (scalar * unscaledY).toNumber();
 		state.z = (scalar * unscaledZ).toNumber();
 		gcdRr1 = BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
-		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v * Rv * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / gcdRr1;
+		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v.pow(getr2Exponent(r2Exp.level)) * Rv.pow(getRExponent(RExp.level)) * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / gcdRr1;
 		currency.value += dt * rhodot;
 	}
 	
@@ -152,28 +183,41 @@ var tick = (elapsedTime, multiplier) => {
 }
 
 var getPrimaryEquation = () => {
-	theory.primaryEquationHeight = 75;
-	theory.primaryEquationScale = .9;
-    let result = "\\dot{\\rho}=\\frac{r_1";
-
+	theory.primaryEquationHeight = 100;
+	theory.primaryEquationScale = .90;
+	
+	let result = "x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1}) \\qquad L=R-r_1 \\\\";
+	result += "y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\qquad \\quad r_2=.5r_1 \\\\ \\\\";
+	
+    result += "\\dot{\\rho}=q\\frac{r_1";
 	if (r1Exp.level > 0)
         result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
 	
-	result += " r_2 R\\sqrt{x^2+y^2}}{gcd(R, r_1)}" +
-	"\\quad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
-	"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";// \\\\" + 
+	result += "r_2"
+	if (r2Exp.level > 0)
+        result += "^{" + getr2Exponent(r2Exp.level).toString(1) + "}";
+	
+	result += "R";
+	if (RExp.level > 0)
+        result += "^{" + getRExponent(RExp.level).toString(1) + "}";
+	
+	result += "\\sqrt{x^2+y^2}}{gcd(R, r_1)}";
+	
+	
+	//"\\quad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
+	//"y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\end{matrix}";// \\\\" + 
 	//"\\\\r_2 = .5r_1 \\\\ \\\\ L = (R - r_1)";
     return result;
 }
 
 var getSecondaryEquation = () => {
-	theory.secondaryEquationHeight = 300;
+	theory.secondaryEquationHeight =300;
 	theory.secondaryEquationScale = 1;
 	return "";
 }
 
 var getTertiaryEquation = () => {
-	return "L=(R-r_1) \\quad r_2=.5r_1 \\quad gcd(R, r1)=" + gcdRr1.toString(0);
+	return "gcd(R, r1)=" + gcdRr1.toString(0);
 }
 
 var getQuaternaryEntries = () => {
@@ -228,8 +272,11 @@ var getR = (level) => {
 }
 var getr1 = (level) => BigNumber.from(level + 1);
 var getr2 = () => getr1(r1.level) * .5;//getr1(r1.level) * ((BigNumber.PI * t / BigNumber.from(500)).sin() + BigNumber.ONE);
+
 var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
-var getC2Exponent = (level) => BigNumber.from(1 + 0.05 * level);
+var getr2Exponent = (level) => BigNumber.from(1 + 0.5 * level);
+var getRExponent = (level) => BigNumber.from(1 + 0.5 * level);
+var getThetaDotMult = (level) => BigNumber.TWO.pow(level);
 
 var GCD = (a, b) => {
 	var R;
