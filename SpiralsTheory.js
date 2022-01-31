@@ -161,8 +161,8 @@ var init = () => {
 	
 	{
 		r2Varies = theory.createMilestoneUpgrade(3,1);
-		r2Varies.description = "r2 varies with theta";
-		r2Varies.info = "r2 varies with theta";
+		r2Varies.description = "r2 varies with \\theta";
+		r2Varies.info = "r2 varies with \\theta";
 		r2Varies.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
 	}
 	
@@ -170,7 +170,10 @@ var init = () => {
 		thetaDotUnlock = theory.createMilestoneUpgrade(4,1);
 		thetaDotUnlock.description = Localization.getUpgradeUnlockDesc("\\dot{\\theta}");
 		thetaDotUnlock.info = Localization.getUpgradeUnlockInfo("\\dot{\\theta}");
-		thetaDotUnlock.boughtOrRefunded = (_) => updateAvailability();
+		thetaDotUnlock.boughtOrRefunded = (_) => {
+			thetaDot.level = 0;
+			updateAvailability();
+		}
 	}
 	
     updateAvailability();
@@ -296,7 +299,14 @@ var getR = (level) => {
 	return BigNumber.from(result);
 }
 var getr1 = (level) => BigNumber.from(level + 1);
-var getr2 = () => getr1(r1.level) * .5;//getr1(r1.level) * ((BigNumber.PI * t / BigNumber.from(500)).sin() + BigNumber.ONE);
+var getr2 = () => {
+	var r1v = getr1(r1.level);
+	if (r2Varies.level = 1) {
+		return r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
+	}
+	return r1v * .5;
+}
+	 
 var getq = (level) => BigNumber.TWO.pow(level);
 
 var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
