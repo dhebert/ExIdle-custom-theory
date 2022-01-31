@@ -50,7 +50,7 @@ var RLevels = [1,
 4620,6930,9240,11550,13860,16170,18480,20790,23100,25410,27720,30030
 ]
 
-var alwaysShowRefundButtons = () => enableRefundsUpgrade.level > 0;
+var alwaysShowRefundButtons = () => true;
 
 var init = () => {
 	t = BigNumber.ONE;
@@ -85,6 +85,7 @@ var init = () => {
 											   new ExponentialCost(BigNumber.from("1e900") * BigNumber.TWO.pow(costExp10), costExp10)))))))))));
 		r1.getDescription = (_) => Utils.getMath(getDesc(r1.level));
 		r1.getInfo = (amount) => Utils.getMathTo(getDesc(r1.level), getDesc(r1.level + amount));
+		r1.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
 		r1.boughtOrRefunded = (_) => theory.clearGraph();
 	}
     
@@ -97,6 +98,7 @@ var init = () => {
 		R.getDescription = (_) => Utils.getMath(getDesc(R.level));
 		R.getInfo = (amount) => Utils.getMathTo(getDesc(R.level), getDesc(R.level + amount));
 		R.maxLevel = 100;
+		R.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
 		R.boughtOrRefunded = (_) => {
 			theory.clearGraph();
 		}
@@ -109,6 +111,7 @@ var init = () => {
     theory.createBuyAllUpgrade(1, currency, 1e15);
     theory.createAutoBuyerUpgrade(2, currency, 1e25);
 	enableRefundsUpgrade = theory.createPermanentUpgrade(3, currency, new LinearCost(BigNumber.from("1e50"),0));
+	enableRefundsUpgrade.description = "Enable Refunds";
 	enableRefundsUpgrade.maxLevel = 1;
 
 	///////////////////////
