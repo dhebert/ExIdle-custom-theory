@@ -163,7 +163,9 @@ var init = () => {
 		r2Varies = theory.createMilestoneUpgrade(3,1);
 		r2Varies.description = "r2 varies with \\theta";
 		r2Varies.info = "r2 varies with \\theta";
-		r2Varies.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+		r2Varies.boughtOrRefunded = (_) => {
+			theory.invalidatePrimaryEquation();
+		}
 	}
 	
 	{
@@ -196,7 +198,7 @@ var tick = (elapsedTime, multiplier) => {
 	
 	if (Rv != BigNumber.ZERO)
 	{
-		scalar = (BigNumber.ONE / (BigNumber.TWO * Rv));
+		scalar = (BigNumber.from(0.7) / Rv);
 		unscaledY = ((Rv - r1v) * (t).cos() + r2v * (t * (Rv - r1v)/r1v).cos());
 		unscaledZ = ((Rv - r1v) * (t).sin() - r2v * (t * (Rv - r1v)/r1v).sin());
 		state.y = (scalar * unscaledY).toNumber();
@@ -212,12 +214,16 @@ var tick = (elapsedTime, multiplier) => {
 
 var getPrimaryEquation = () => {
 	theory.primaryEquationHeight = 100;
-	theory.primaryEquationScale = .90;
+	theory.primaryEquationScale = .6;
 	
 	let result = "x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1}) \\qquad L=R-r_1 \\\\";
-	result += "y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\qquad \\quad r_2=.5r_1 \\\\ \\\\";
+	result += "y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\qquad "
+	if (r2Varies.level == 0)
+		result +="\\quad r_2=.5r_1";
+	if (r2Varies.level == 1)
+		result +="r_2=r_1(\\sin(\\frac{\\theta}{250})+1)";
 	
-    result += "\\dot{\\rho}=\\frac{r_1";
+    result += " \\\\ \\\\ \\dot{\\rho}=\\frac{r_1";
 	if (r1Exp.level > 0)
         result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
 	
@@ -301,8 +307,8 @@ var getR = (level) => {
 var getr1 = (level) => BigNumber.from(level + 1);
 var getr2 = () => {
 	var r1v = getr1(r1.level);
-	if (r2Varies.level = 1) {
-		return r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
+	if (r2Varies.level == 1) {
+		return .5 * r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
 	}
 	return r1v * .5;
 }
