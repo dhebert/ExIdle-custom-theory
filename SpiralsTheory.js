@@ -5,7 +5,7 @@ import { theory } from "./api/Theory";
 import { Utils } from "./api/Utils";
 
 var id = "spi_ro_graph_id";
-var name = "Spirograph";
+var name = "Spirals Theory";
 var description = "Swirly picture go brr";
 var authors = "EdgeOfDreams";
 var version = 1;
@@ -26,7 +26,7 @@ var center = new Vector3(0, 0, 0);
 
 var scale = 1;
 
-var R, r1, r2, q;
+var R, r1, r2, q, thetaDot;
 var t;
 var scalar = .1;
 var rhodot = BigNumber.ZERO;
@@ -110,8 +110,19 @@ var init = () => {
 		let getInfo = (level) => "q=" + getq(level).toString(0);
 		q = theory.createUpgrade(2, currency, new ExponentialCost(BigNumber.from("1e4"), 1.5));
 		q.getDescription = (_) => Utils.getMath(getDesc(q.level));
-		q.getInfo = (amount) => Utils.getMathTo(getDesc(q.level), getDesc(q.level + amount));
+		q.getInfo = (amount) => Utils.getMathTo(getInfo(q.level), getInfo(q.level + amount));
 		q.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+	}
+	
+	// thetaDot
+	{
+		let getDesc = (level) => "\\dot{\\theta}=" + (level + 1);
+		thetaDot = theory.createUpgrade(3, currency, new FreeCost());
+		thetaDot.getDescription = (_) => Utils.getMath(getDesc(thetaDot.level));
+		thetaDot.getInfo = (amount) => Utils.getMathTo(getDesc(thetaDot.level), getDesc(thetaDot.level + amount));
+		thetaDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+		thetaDot.maxLevel = 3;
+		thetaDot.isAvailable = false;
 	}
 	
 	/////////////////////
@@ -156,24 +167,24 @@ var init = () => {
 	}
 	
 	{
-		thetaDotMult = theory.createMilestoneUpgrade(4,3);
-		thetaDotMult.description = Localization.getUpgradeMultCustomDesc("\\dot{\\theta}", 2);
-		thetaDotMult.info = Localization.getUpgradeMultCustomInfo("\\dot{\\theta}", 2);
-		//thetaDotMult.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+		thetaDotUnlock = theory.createMilestoneUpgrade(4,1);
+		thetaDotUnlock.description = Localization.getUpgradeUnlockDesc("\\dot{\\theta}");
+		thetaDotUnlock.info = Localization.getUpgradeUnlockInfo("\\dot{\\theta}");
+		thetaDotUnlock.boughtOrRefunded = (_) => updateAvailability();
 	}
 	
     updateAvailability();
 }
 
 var updateAvailability = () => {
-    //c2Exp.isAvailable = c1Exp.level > 0;
+    thetaDot.isAvailable = thetaDotUnlock.level > 0;
 }
 
 var tick = (elapsedTime, multiplier) => {
     let dt = BigNumber.from(elapsedTime * multiplier);
     let bonus = theory.publicationMultiplier;
 									
-	t = t + dt * getThetaDotMult(thetaDotMult.level);
+	t = t + dt * getThetaDot(thetaDot.level);
 	
 	var Rv = getR(R.level);
 	var r1v = getr1(r1.level);
@@ -291,7 +302,7 @@ var getq = (level) => BigNumber.TWO.pow(level);
 var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
 var getr2Exponent = (level) => BigNumber.from(1 + 0.5 * level);
 var getRExponent = (level) => BigNumber.from(1 + 0.5 * level);
-var getThetaDotMult = (level) => BigNumber.TWO.pow(level);
+var getThetaDot = (level) => BigNumber.from(level + 1);
 
 var GCD = (a, b) => {
 	var R;
