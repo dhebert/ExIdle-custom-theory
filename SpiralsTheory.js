@@ -26,7 +26,7 @@ var center = new Vector3(0, 0, 0);
 
 var scale = 1;
 
-var R, r1, r2;
+var R, r1, r2, q;
 var t;
 var scalar = .1;
 var rhodot = BigNumber.ZERO;
@@ -104,6 +104,16 @@ var init = () => {
 		}
 	}
 	
+	// q
+	{
+		let getDesc = (level) => "q=2^{" + level + "}";
+		let getInfo = (level) => "q=" + getq(level).toString(0);
+		q = theory.createUpgrade(2, currency, new ExponentialCost(BigNumber.from("1e4"), 1.5));
+		q.getDescription = (_) => Utils.getMath(getDesc(q.level));
+		q.getInfo = (amount) => Utils.getMathTo(getDesc(q.level), getDesc(q.level + amount));
+		q.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+	}
+	
 	/////////////////////
     // Permanent Upgrades
 	
@@ -168,6 +178,7 @@ var tick = (elapsedTime, multiplier) => {
 	var Rv = getR(R.level);
 	var r1v = getr1(r1.level);
 	var r2v = getr2();
+	var qv = getq(q.level);
 	
 	if (Rv != BigNumber.ZERO)
 	{
@@ -177,7 +188,7 @@ var tick = (elapsedTime, multiplier) => {
 		state.y = (scalar * unscaledY).toNumber();
 		state.z = (scalar * unscaledZ).toNumber();
 		gcdRr1 = BigNumber.from(GCD(parseInt(Rv.toString(0,0,Rounding.NEAREST)), parseInt(r1v.toString(0,0,Rounding.NEAREST))));
-		rhodot = bonus * r1v.pow(getr1Exponent(r1Exp.level)) * r2v.pow(getr2Exponent(r2Exp.level)) * Rv.pow(getRExponent(RExp.level)) * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / gcdRr1;
+		rhodot = bonus * qv * r1v.pow(getr1Exponent(r1Exp.level)) * r2v.pow(getr2Exponent(r2Exp.level)) * Rv.pow(getRExponent(RExp.level)) * (unscaledY * unscaledY + unscaledZ * unscaledZ).sqrt() / gcdRr1;
 		currency.value += dt * rhodot;
 	}
 	
@@ -192,7 +203,7 @@ var getPrimaryEquation = () => {
 	let result = "x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1}) \\qquad L=R-r_1 \\\\";
 	result += "y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\qquad \\quad r_2=.5r_1 \\\\ \\\\";
 	
-    result += "\\dot{\\rho}=q\\frac{r_1";
+    result += "\\dot{\\rho}=\\frac{r_1";
 	if (r1Exp.level > 0)
         result += "^{" + getr1Exponent(r1Exp.level).toString(1) + "}";
 	
@@ -204,7 +215,7 @@ var getPrimaryEquation = () => {
 	if (RExp.level > 0)
         result += "^{" + getRExponent(RExp.level).toString(1) + "}";
 	
-	result += "\\sqrt{x^2+y^2}}{gcd(R, r_1)}";
+	result += "}{gcd(R, r_1)}\\cdot q \\sqrt{x^2+y^2}";
 	
 	
 	//"\\quad \\begin{matrix} x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1} )\\\\" +
@@ -275,6 +286,7 @@ var getR = (level) => {
 }
 var getr1 = (level) => BigNumber.from(level + 1);
 var getr2 = () => getr1(r1.level) * .5;//getr1(r1.level) * ((BigNumber.PI * t / BigNumber.from(500)).sin() + BigNumber.ONE);
+var getq = (level) => BigNumber.TWO.pow(level);
 
 var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
 var getr2Exponent = (level) => BigNumber.from(1 + 0.5 * level);
