@@ -8,7 +8,7 @@ var id = "spi_ro_graph_id";
 var name = "Spirals Theory";
 var description = "Swirly picture go brr";
 var authors = "EdgeOfDreams";
-var version = 1.1;
+var version = 1.2;
 
 var currency;
 var c1Exp, c2Exp;
@@ -218,6 +218,11 @@ var tick = (elapsedTime, multiplier) => {
 	
 	theory.invalidateQuaternaryValues();
 	theory.invalidateTertiaryEquation();
+}
+
+var postPublish = () => {
+	t = BigNumber.ZERO;
+    qv = BigNumber.ONE;
 }
 
 ///////////////////////////////
