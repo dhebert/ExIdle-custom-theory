@@ -8,7 +8,7 @@ var id = "spi_ro_graph_id";
 var name = "Spirals Theory";
 var description = "Swirly picture go brr";
 var authors = "EdgeOfDreams";
-var version = 1;
+var version = 1.1;
 
 var currency;
 var c1Exp, c2Exp;
@@ -26,8 +26,8 @@ var center = new Vector3(0, 0, 0);
 
 var scale = 1;
 
-var R, r1, r2, q, thetaDot;
-var t;
+var R, r1, r2, qDot, thetaDot;
+var t, qv;
 var scalar = .1;
 var rhodot = BigNumber.ZERO;
 var gcdRr1 = BigNumber.ZERO;
@@ -54,6 +54,7 @@ var alwaysShowRefundButtons = () => true;
 
 var init = () => {
 	t = BigNumber.ONE;
+	qv = BigNumber.ONE;
     currency = theory.createCurrency();
 
     ///////////////////
@@ -106,12 +107,17 @@ var init = () => {
 	
 	// q
 	{
-		let getDesc = (level) => "q=2^{" + level + "}";
-		let getInfo = (level) => "q=" + getq(level).toString(0);
-		q = theory.createUpgrade(2, currency, new ExponentialCost(BigNumber.from("1e4"), 1.5));
-		q.getDescription = (_) => Utils.getMath(getDesc(q.level));
-		q.getInfo = (amount) => Utils.getMathTo(getInfo(q.level), getInfo(q.level + amount));
-		q.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+		let getDesc = (level) => 
+		{
+			if (level == 0) return "\\dot{q}=0";
+			var pow = level - 1;
+			return "\\dot{q}=2^{" + pow + "}"
+		};
+		let getInfo = (level) => "\\dot{q}=" + getqDot(level).toString(0);
+		qDot = theory.createUpgrade(2, currency, new ExponentialCost(BigNumber.from("1e4"), 1.5));
+		qDot.getDescription = (_) => Utils.getMath(getDesc(qDot.level));
+		qDot.getInfo = (amount) => Utils.getMathTo(getInfo(qDot.level), getInfo(qDot.level + amount));
+		qDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
 	}
 	
 	// thetaDot
@@ -128,7 +134,7 @@ var init = () => {
 	/////////////////////
     // Permanent Upgrades
 	
-    theory.createPublicationUpgrade(0, currency, 1e4);
+    theory.createPublicationUpgrade(0, currency, 1e10);
     theory.createBuyAllUpgrade(1, currency, 1e15);
     theory.createAutoBuyerUpgrade(2, currency, 1e25);
 	enableRefundsUpgrade = theory.createPermanentUpgrade(3, currency, new LinearCost(BigNumber.from("1e50"),0));
@@ -194,7 +200,9 @@ var tick = (elapsedTime, multiplier) => {
 	var Rv = getR(R.level);
 	var r1v = getr1(r1.level);
 	var r2v = getr2();
-	var qv = getq(q.level);
+	var qDotv = getqDot(qDot.level);
+	
+	qv = qv + dt * qDotv;
 	
 	if (Rv != BigNumber.ZERO)
 	{
@@ -211,6 +219,72 @@ var tick = (elapsedTime, multiplier) => {
 	theory.invalidateQuaternaryValues();
 	theory.invalidateTertiaryEquation();
 }
+
+///////////////////////////////
+//	Supporting math functions
+
+var getPublicationMultiplier = (tau) => tau.pow(1.5);
+var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.164}}{3}";
+var getTau = () => currency.value.pow(0.1);
+var get3DGraphPoint = () => swizzles[0]((state - center) * scale);
+
+var getR = (level) => {
+	if (level == 0) { return BigNumber.ZERO; }
+	if (level == 1) { return BigNumber.ONE; }
+	
+	var i = 0;
+	var k = 0;
+	var result = 1;
+	while (i < level + 1)
+	{		
+		var p = firstHundredPrimes[k];
+		if (p + i < level)
+		{
+			result = result * p;
+			i += p - 1;
+		}
+		else
+		{
+			result = result * (level - i);
+			i = level + 1;
+		}
+		k++;
+	}
+	return BigNumber.from(result);
+}
+var getr1 = (level) => BigNumber.from(level + 1);
+var getr2 = () => {
+	var r1v = getr1(r1.level);
+	if (r2Varies.level == 1) {
+		return .5 * r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
+	}
+	return r1v * .5;
+}
+	 
+var getqDot = (level) => {
+	if (level == 0) return BigNumber.ZERO;
+	return BigNumber.TWO.pow(level - 1)
+};
+
+var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
+var getr2Exponent = (level) => BigNumber.from(1 + 0.5 * level);
+var getRExponent = (level) => BigNumber.from(1 + 0.5 * level);
+var getThetaDot = (level) => BigNumber.from(level + 1);
+
+var GCD = (a, b) => {
+	var R;
+	if (a > b) {var c = a; a = b; b = c;}
+	while ((a % b) > 0)
+	{
+		R = a % b;
+		a = b;
+		b = R;
+	}
+	return b;
+}
+
+////////////////////////////////
+//	Formula and data display
 
 var getPrimaryEquation = () => {
 	theory.primaryEquationHeight = 100;
@@ -251,7 +325,7 @@ var getSecondaryEquation = () => {
 }
 
 var getTertiaryEquation = () => {
-	return "gcd(R, r1)=" + gcdRr1.toString(0);
+	return "q=" + qv.toString(0) + "\\quad gcd(R, r1)=" + gcdRr1.toString(0);
 }
 
 var getQuaternaryEntries = () => {
@@ -275,61 +349,6 @@ var getQuaternaryEntries = () => {
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(1.5);
-var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.164}}{3}";
-var getTau = () => currency.value.pow(0.1);
-var get3DGraphPoint = () => swizzles[0]((state - center) * scale);
 
-var getR = (level) => {
-	if (level == 0) { return BigNumber.ZERO; }
-	if (level == 1) { return BigNumber.ONE; }
-	
-	var i = 0;
-	var k = 0;
-	var result = 1;
-	while (i < level + 1)
-	{		
-		var p = firstHundredPrimes[k];
-		if (p + i < level)
-		{
-			result = result * p;
-			i += p - 1;
-		}
-		else
-		{
-			result = result * (level - i);
-			i = level + 1;
-		}
-		k++;
-	}
-	return BigNumber.from(result);
-}
-var getr1 = (level) => BigNumber.from(level + 1);
-var getr2 = () => {
-	var r1v = getr1(r1.level);
-	if (r2Varies.level == 1) {
-		return .5 * r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
-	}
-	return r1v * .5;
-}
-	 
-var getq = (level) => BigNumber.TWO.pow(level);
-
-var getr1Exponent = (level) => BigNumber.from(1 + 0.5 * level);
-var getr2Exponent = (level) => BigNumber.from(1 + 0.5 * level);
-var getRExponent = (level) => BigNumber.from(1 + 0.5 * level);
-var getThetaDot = (level) => BigNumber.from(level + 1);
-
-var GCD = (a, b) => {
-	var R;
-	if (a > b) {var c = a; a = b; b = c;}
-	while ((a % b) > 0)
-	{
-		R = a % b;
-		a = b;
-		b = R;
-	}
-	return b;
-}
 
 init();
