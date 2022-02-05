@@ -8,7 +8,7 @@ var id = "spi_ro_graph_id";
 var name = "Spirals Theory";
 var description = "Swirly picture go brr";
 var authors = "EdgeOfDreams";
-var version = 1.3;
+var version = 1.4;
 
 var currency;
 var r1Exp, r2Exp, RExp, r2VariesWithr1, r2VariesWithTheta;
@@ -121,16 +121,20 @@ var init = () => {
 	
 	// c1
 	{
-		
-		
+		let getDesc = (level) => "c_1=" + getc1(level).toString(2);
+		c1 = theory.createUpgrade(2, currency, new ExponentialCost(1, 4));
+		c1.getDescription = (_) => Utils.getMath(getDesc(c1.level));
+		c1.getInfo = (amount) => Utils.getMathTo(getDesc(c1.level), getDesc(c1.level + amount));
+		c1.maxLevel = 99;
+		c1.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+		c1.boughtOrRefunded = (_) => theory.clearGraph();
 	}
     
 	
 	// R
 	{
 		let getDesc = (level) => "R=" + getR(level).toString(0);
-		//R = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(10,3.321928094887)));
-		R = theory.createUpgrade(2, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2))));
+		R = theory.createUpgrade(3, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2))));
 		R.getDescription = (_) => Utils.getMath(getDesc(R.level));
 		R.getInfo = (amount) => Utils.getMathTo(getDesc(R.level), getDesc(R.level + amount));
 		R.maxLevel = 100;
@@ -149,7 +153,7 @@ var init = () => {
 			return "\\dot{q}=2^{" + pow + "}"
 		};
 		let getInfo = (level) => "\\dot{q}=" + getqDot(level).toString(0);
-		qDot = theory.createUpgrade(3, currency, new ExponentialCost(BigNumber.from("1e4"), 2));
+		qDot = theory.createUpgrade(4, currency, new ExponentialCost(BigNumber.from("1e4"), 2));
 		qDot.getDescription = (_) => Utils.getMath(getDesc(qDot.level));
 		qDot.getInfo = (amount) => Utils.getMathTo(getInfo(qDot.level), getInfo(qDot.level + amount));
 		qDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
@@ -158,7 +162,7 @@ var init = () => {
 	// thetaDot
 	{
 		let getDesc = (level) => "\\dot{\\theta}=" + (level + 1);
-		thetaDot = theory.createUpgrade(4, currency, new FreeCost());
+		thetaDot = theory.createUpgrade(5, currency, new FreeCost());
 		thetaDot.getDescription = (_) => Utils.getMath(getDesc(thetaDot.level));
 		thetaDot.getInfo = (amount) => Utils.getMathTo(getDesc(thetaDot.level), getDesc(thetaDot.level + amount));
 		thetaDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
@@ -173,6 +177,10 @@ var init = () => {
     theory.createBuyAllUpgrade(1, currency, 1e15);
     theory.createAutoBuyerUpgrade(2, currency, 1e25);
 	enableRefundsUpgrade = theory.createPermanentUpgrade(3, currency, new LinearCost(BigNumber.from("1e50"),0));
+	// enableRefundsUpgrade.boughtOrRefunded = (_) =>
+	// {
+		// var alwaysShowRefundButtons = true;
+	// }
 	enableRefundsUpgrade.description = "Enable Refunds";
 	enableRefundsUpgrade.maxLevel = 1;
 
@@ -186,19 +194,6 @@ var init = () => {
         r1Exp.info = Localization.getUpgradeIncCustomExpInfo("r_1", "0.5");
         r1Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
     }
-	{
-        r2Exp = theory.createMilestoneUpgrade(1, 3);
-        r2Exp.description = Localization.getUpgradeIncCustomExpDesc("r_2", "0.5");
-        r2Exp.info = Localization.getUpgradeIncCustomExpInfo("r_2", "0.5");
-        r2Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
-    }
-
-	{
-        RExp = theory.createMilestoneUpgrade(2, 3);
-        RExp.description = Localization.getUpgradeIncCustomExpDesc("R", "0.5");
-        RExp.info = Localization.getUpgradeIncCustomExpInfo("R", "0.5");
-        RExp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
-    }
 	
 	{
 		r2VariesWithr1 = theory.createMilestoneUpgrade(3,1);
@@ -211,6 +206,13 @@ var init = () => {
 	}
 	
 	{
+        RExp = theory.createMilestoneUpgrade(2, 3);
+        RExp.description = Localization.getUpgradeIncCustomExpDesc("R", "0.5");
+        RExp.info = Localization.getUpgradeIncCustomExpInfo("R", "0.5");
+        RExp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
+    }
+	
+	{
 		r2VariesWithTheta = theory.createMilestoneUpgrade(4,1);
 		r2VariesWithTheta.description = "r2 varies with \\theta";
 		r2VariesWithTheta.info = "r2 varies with \\theta";
@@ -219,6 +221,13 @@ var init = () => {
 			updateAvailability();
 		}
 	}
+	
+	{
+        r2Exp = theory.createMilestoneUpgrade(1, 3);
+        r2Exp.description = Localization.getUpgradeIncCustomExpDesc("r_2", "0.5");
+        r2Exp.info = Localization.getUpgradeIncCustomExpInfo("r_2", "0.5");
+        r2Exp.boughtOrRefunded = (_) => theory.invalidatePrimaryEquation();
+    }	
 	
 	{
 		thetaDotUnlock = theory.createMilestoneUpgrade(5,1);
@@ -234,9 +243,15 @@ var init = () => {
 }
 
 var updateAvailability = () => {
+	//regular upgrades
 	r2.isAvailable = r2VariesWithr1.level == 0;
+	c1.isAvailable = r2VariesWithr1.level == 1 && r2VariesWithTheta.level == 0;
+	thetaDot.isAvailable = thetaDotUnlock.level > 0;
+	
+	//milestone upgrades
 	r2VariesWithTheta.isAvailable = r2VariesWithr1.level == 1;
-    thetaDot.isAvailable = thetaDotUnlock.level > 0;
+	
+    
 }
 
 var tick = (elapsedTime, multiplier) => {
@@ -325,7 +340,11 @@ var getr2 = (level) => {
 	if (r2VariesWithTheta.level == 1) {
 		return .5 * r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
 	}
-	return r1v * .5;
+	return r1v * getc1(c1.level);
+}
+
+var getc1 = (level) => {
+	return BigNumber.from(0.01 * (level + 1));
 }
 	 
 var getqDot = (level) => {
@@ -364,7 +383,7 @@ var getPrimaryEquation = () => {
 		result +="\\quad r_2=r_2";
 	}
 	else if (r2VariesWithTheta.level == 0){
-		result +="\\quad r_2=.5r_1";
+		result +="\\quad r_2=c_1r_1";
 	}
 	else if (r2VariesWithTheta.level == 1) {
 		result +="r_2=r_1(\\sin(\\frac{\\theta}{250})+1)";
