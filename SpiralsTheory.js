@@ -8,10 +8,10 @@ var id = "spi_ro_graph_id";
 var name = "Spirals Theory";
 var description = "Swirly picture go brr";
 var authors = "EdgeOfDreams";
-var version = 1.2;
+var version = 1.3;
 
 var currency;
-var c1Exp, c2Exp;
+var r1Exp, r2Exp, RExp, r2VariesWithr1, r2VariesWithTheta;
 
 var achievement1, achievement2;
 var chapter1, chapter2;
@@ -73,8 +73,7 @@ var init = () => {
 		var costExp9 = BigNumber.from("1e100").log2() / BigNumber.from(96996891);
 		var costExp10 = BigNumber.from("1e100").log2() / BigNumber.from(1804142330);
 		let getDesc = (level) => "r_1=" + getr1(level).toString(0);
-		//r1 = theory.createUpgrade(1, currency, new ExponentialCost(1,BigNumber.from("1.65282744595332527e-6"))); //exponential cost to reach 1e1000
-		r1 = theory.createUpgrade(1, currency, new CompositeCost(89,new ExponentialCost(1, costExp1),
+		r1 = theory.createUpgrade(0, currency, new CompositeCost(89,new ExponentialCost(1, costExp1),
 											   new CompositeCost(1381,new ExponentialCost(BigNumber.from("1e100") * BigNumber.TWO.pow(costExp2), costExp2),
 											   new CompositeCost(14701,new ExponentialCost(BigNumber.from("1e200") * BigNumber.TWO.pow(costExp3), costExp3),
 											   new CompositeCost(133979,new ExponentialCost(BigNumber.from("1e300") * BigNumber.TWO.pow(costExp4), costExp4),
@@ -89,13 +88,49 @@ var init = () => {
 		r1.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
 		r1.boughtOrRefunded = (_) => theory.clearGraph();
 	}
+	
+	// r2
+	{
+		var costExp1 = BigNumber.from("1e100").log2() / BigNumber.from(44);
+		var costExp2 = BigNumber.from("1e100").log2() / BigNumber.from(690);
+		var costExp3 = BigNumber.from("1e100").log2() / BigNumber.from(7350);
+		var costExp4 = BigNumber.from("1e100").log2() / BigNumber.from(66988);
+		var costExp5 = BigNumber.from("1e100").log2() / BigNumber.from(150147);
+		var costExp6 = BigNumber.from("1e100").log2() / BigNumber.from(2072067);
+		var costExp7 = BigNumber.from("1e100").log2() / BigNumber.from(5105093);
+		var costExp8 = BigNumber.from("1e100").log2() / BigNumber.from(48498445);
+		var costExp9 = BigNumber.from("1e100").log2() / BigNumber.from(48498445);
+		var costExp10 = BigNumber.from("1e100").log2() / BigNumber.from(902071165);
+		let getDesc = (level) => "r_2=" + getr2(level).toString(0);
+		r2 = theory.createUpgrade(1, currency, new CompositeCost(45,new ExponentialCost(1, costExp1),
+											   new CompositeCost(691,new ExponentialCost(BigNumber.from("1e100") * BigNumber.TWO.pow(costExp2), costExp2),
+											   new CompositeCost(7351,new ExponentialCost(BigNumber.from("1e200") * BigNumber.TWO.pow(costExp3), costExp3),
+											   new CompositeCost(66989,new ExponentialCost(BigNumber.from("1e300") * BigNumber.TWO.pow(costExp4), costExp4),
+											   new CompositeCost(150148,new ExponentialCost(BigNumber.from("1e400") * BigNumber.TWO.pow(costExp5), costExp5),
+											   new CompositeCost(2552547,new ExponentialCost(BigNumber.from("1e500") * BigNumber.TWO.pow(costExp6), costExp6),
+											   new CompositeCost(5105100,new ExponentialCost(BigNumber.from("1e600") * BigNumber.TWO.pow(costExp7), costExp7),
+											   new CompositeCost(48498446,new ExponentialCost(BigNumber.from("1e700") * BigNumber.TWO.pow(costExp8), costExp8),
+											   new CompositeCost(48498446,new ExponentialCost(BigNumber.from("1e800") * BigNumber.TWO.pow(costExp9), costExp9),
+											   new ExponentialCost(BigNumber.from("1e900") * BigNumber.TWO.pow(costExp10), costExp10)))))))))));
+		r2.getDescription = (_) => Utils.getMath(getDesc(r2.level));
+		r2.getInfo = (amount) => Utils.getMathTo(getDesc(r2.level), getDesc(r2.level + amount));
+		r2.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
+		r2.boughtOrRefunded = (_) => theory.clearGraph();
+		
+	}
+	
+	// c1
+	{
+		
+		
+	}
     
 	
 	// R
 	{
 		let getDesc = (level) => "R=" + getR(level).toString(0);
 		//R = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(10,3.321928094887)));
-		R = theory.createUpgrade(0, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2))));
+		R = theory.createUpgrade(2, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2))));
 		R.getDescription = (_) => Utils.getMath(getDesc(R.level));
 		R.getInfo = (amount) => Utils.getMathTo(getDesc(R.level), getDesc(R.level + amount));
 		R.maxLevel = 100;
@@ -114,7 +149,7 @@ var init = () => {
 			return "\\dot{q}=2^{" + pow + "}"
 		};
 		let getInfo = (level) => "\\dot{q}=" + getqDot(level).toString(0);
-		qDot = theory.createUpgrade(2, currency, new ExponentialCost(BigNumber.from("1e4"), 1.5));
+		qDot = theory.createUpgrade(3, currency, new ExponentialCost(BigNumber.from("1e4"), 2));
 		qDot.getDescription = (_) => Utils.getMath(getDesc(qDot.level));
 		qDot.getInfo = (amount) => Utils.getMathTo(getInfo(qDot.level), getInfo(qDot.level + amount));
 		qDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
@@ -123,7 +158,7 @@ var init = () => {
 	// thetaDot
 	{
 		let getDesc = (level) => "\\dot{\\theta}=" + (level + 1);
-		thetaDot = theory.createUpgrade(3, currency, new FreeCost());
+		thetaDot = theory.createUpgrade(4, currency, new FreeCost());
 		thetaDot.getDescription = (_) => Utils.getMath(getDesc(thetaDot.level));
 		thetaDot.getInfo = (amount) => Utils.getMathTo(getDesc(thetaDot.level), getDesc(thetaDot.level + amount));
 		thetaDot.canBeRefunded = (level) => enableRefundsUpgrade.level > 0;
@@ -166,16 +201,27 @@ var init = () => {
     }
 	
 	{
-		r2Varies = theory.createMilestoneUpgrade(3,1);
-		r2Varies.description = "r2 varies with \\theta";
-		r2Varies.info = "r2 varies with \\theta";
-		r2Varies.boughtOrRefunded = (_) => {
+		r2VariesWithr1 = theory.createMilestoneUpgrade(3,1);
+		r2VariesWithr1.description = "r2 varies with r1";
+		r2VariesWithr1.info = "r2 varies with r1";
+		r2VariesWithr1.boughtOrRefunded = (_) => {
 			theory.invalidatePrimaryEquation();
+			updateAvailability();
 		}
 	}
 	
 	{
-		thetaDotUnlock = theory.createMilestoneUpgrade(4,1);
+		r2VariesWithTheta = theory.createMilestoneUpgrade(4,1);
+		r2VariesWithTheta.description = "r2 varies with \\theta";
+		r2VariesWithTheta.info = "r2 varies with \\theta";
+		r2VariesWithTheta.boughtOrRefunded = (_) => {
+			theory.invalidatePrimaryEquation();
+			updateAvailability();
+		}
+	}
+	
+	{
+		thetaDotUnlock = theory.createMilestoneUpgrade(5,1);
 		thetaDotUnlock.description = Localization.getUpgradeUnlockDesc("\\dot{\\theta}");
 		thetaDotUnlock.info = Localization.getUpgradeUnlockInfo("\\dot{\\theta}");
 		thetaDotUnlock.boughtOrRefunded = (_) => {
@@ -188,6 +234,8 @@ var init = () => {
 }
 
 var updateAvailability = () => {
+	r2.isAvailable = r2VariesWithr1.level == 0;
+	r2VariesWithTheta.isAvailable = r2VariesWithr1.level == 1;
     thetaDot.isAvailable = thetaDotUnlock.level > 0;
 }
 
@@ -199,7 +247,7 @@ var tick = (elapsedTime, multiplier) => {
 	
 	var Rv = getR(R.level);
 	var r1v = getr1(r1.level);
-	var r2v = getr2();
+	var r2v = getr2(r2.level);
 	var qDotv = getqDot(qDot.level);
 	
 	qv = qv + dt * qDotv;
@@ -268,9 +316,13 @@ var getR = (level) => {
 	return BigNumber.from(result);
 }
 var getr1 = (level) => BigNumber.from(level + 1);
-var getr2 = () => {
+var getr2 = (level) => {
+	if (r2VariesWithr1.level == 0){
+		return BigNumber.from(level + 1);
+	}
+	
 	var r1v = getr1(r1.level);
-	if (r2Varies.level == 1) {
+	if (r2VariesWithTheta.level == 1) {
 		return .5 * r1v * ((BigNumber.PI * t / BigNumber.from(250)).sin() + BigNumber.ONE);
 	}
 	return r1v * .5;
@@ -307,10 +359,16 @@ var getPrimaryEquation = () => {
 	
 	let result = "x=L\\cos(\\theta) + r_2\\cos(\\theta L r_1^{-1}) \\qquad L=R-r_1 \\\\";
 	result += "y=L\\sin(\\theta) - r_2\\sin(\\theta L r_1^{-1}) \\qquad "
-	if (r2Varies.level == 0)
+	
+	if (r2VariesWithr1.level == 0) {
+		result +="\\quad r_2=r_2";
+	}
+	else if (r2VariesWithTheta.level == 0){
 		result +="\\quad r_2=.5r_1";
-	if (r2Varies.level == 1)
+	}
+	else if (r2VariesWithTheta.level == 1) {
 		result +="r_2=r_1(\\sin(\\frac{\\theta}{250})+1)";
+	}
 	
     result += " \\\\ \\\\ \\dot{\\rho}=\\frac{r_1";
 	if (r1Exp.level > 0)
@@ -355,7 +413,7 @@ var getQuaternaryEntries = () => {
     }
 
 	quaternaryEntries[0].value = (getR(R.level) - getr1(r1.level)).toString(0);
-	quaternaryEntries[1].value = getr2().toString(2);
+	quaternaryEntries[1].value = getr2(r2.level).toString(2);
     quaternaryEntries[2].value = t;
 	quaternaryEntries[3].value = unscaledY;
 	quaternaryEntries[4].value = -1 * unscaledZ;
