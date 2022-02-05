@@ -225,6 +225,16 @@ var postPublish = () => {
     qv = BigNumber.ONE;
 }
 
+var getInternalState = () => `${t} ${qv}`;
+
+var setInternalState = (state) => {
+    let values = state.split(" ");
+    if (values.length == 2)	{
+		t = parseBigNumber(values[0]);
+		qv = parseBigNumber(values[1]);
+	}
+}
+
 ///////////////////////////////
 //	Supporting math functions
 
