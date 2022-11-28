@@ -134,7 +134,7 @@ var init = () => {
 	// R
 	{
 		let getDesc = (level) => "R=" + getR(level).toString(0);
-		R = theory.createUpgrade(3, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2))));
+		R = theory.createUpgrade(3, currency, new FirstFreeCost(new CustomCost((level) => BigNumber.from(1.01) * r1.cost.getCost(Math.max(parseInt(getR(level + 1).toString(0,0,Rounding.NEAREST)) - 2, 0)))));
 		R.getDescription = (_) => Utils.getMath(getDesc(R.level));
 		R.getInfo = (amount) => Utils.getMathTo(getDesc(R.level), getDesc(R.level + amount));
 		R.maxLevel = 100;
